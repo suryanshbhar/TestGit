@@ -1,23 +1,39 @@
+/*
+
+Compiler Construction Lab Assignment 1
+
+Suryansh Bhardwaj
+101983044   COE20
+
+*/
+
 #include<bits/stdc++.h>
 using namespace std;
 
-int links[11][4] = { {-1,-1,1,7} , 
-                     {-1,-1,2,4} , 
-                     {3,-1,-1,-1},
-                     {-1,-1,6,-1},
-                     {-1,5,-1,-1},
-                     {-1,-1,6,-1},
-                     {-1,-1,1,7} ,
-                     {8,-1,-1,-1},
-                     {-1,9,-1,-1},
-                     {-1,10,-1,-1},
-                     {-1,-1,-1,-1} };
+// Given Grammar : (a+b)*abb
+
+// links are the transitions corresponding to the thomson construction
+// of the given grammmar.
+// States have been named from 0 to 10
+
+
+//    on edge         a , b , E1, E2
+int links[11][4] = { {-1, -1, 1,  7}, 
+                     {-1, -1, 2,  4}, 
+                     {3 , -1, -1,-1},
+                     {-1, -1,  6,-1},
+                     {-1,  5, -1,-1},
+                     {-1, -1,  6,-1},
+                     {-1, -1,  1, 7},
+                     {8,  -1, -1,-1},
+                     {-1,  9, -1,-1},
+                     {-1, 10, -1,-1},
+                     {-1, -1, -1,-1} };
 
 
 map<pair< set<int>,char > ,set<int>> transitions;
 int start = 0;
 int final = 10;
-
 
 
 
@@ -170,16 +186,205 @@ void verify( string input,map<pair<string,char>,string> dfa , string start_state
 
     if(final_states.find(state) != final_states.end() ){
 
-        cout<<endl<<"STRING VALID"<<endl;
+        cout<<endl<<"ACCEPT "<<endl;
 
     }else{
-        cout<<endl<<"INVALID STRING"<<endl;
+        cout<<endl<<"NOT ACCEPTED"<<endl;
     }
 
 
 
 
 }
+
+void printdfa(map<pair<string,char>,string> &dfa, string &start_state , set<string> final_states){
+    for(auto key:dfa){ 
+
+        cout<<key.first.first<<" on "<<key.first.second<<" ----------> "<<key.second<<endl;
+      
+    }
+
+    cout<<"start_state: ";
+
+    
+     cout<<start_state<<endl;
+
+    cout<<"final_states: ";
+
+    for(auto a:final_states){
+        cout<<a<<" ";
+
+    }
+    cout<<endl<<endl;
+}
+
+
+
+
+void minimize(map<pair<string,char>,string> &dfa , string &start_state , set<string> final_states,vector<string> names){
+
+    cout<<"Minimizing the dfa: "<<endl<<endl;
+
+    set<set<string>> min;
+
+    
+    set<string> others;
+
+    for(auto a:names){
+
+        if( final_states.find(a) == final_states.end() ){
+            others.insert(a);
+        }
+
+    }
+    min.insert(others);
+    min.insert(final_states);
+
+    set<set<string>> prev;
+
+
+
+
+
+    while(prev!=min){
+
+        cout<<"{ ";
+        for(auto a:min){
+
+            if(a.empty() == true){
+                continue;
+            }
+
+            cout<<"( ";
+
+            for(auto b:a){
+
+                cout<<b<<" ";
+
+            }
+
+            cout<<" ), ";
+
+        }
+        cout<<" }"<<endl;
+
+
+    set<set<string>> tbd;
+    set<set<string>> tba;
+
+
+    for(auto a:min){
+
+
+        if(a.size() == 1){
+            continue;
+        }
+
+        set<string> hat;
+
+        for(auto b:a){
+
+            string one = dfa[make_pair(b,'a')];
+            string two = dfa[make_pair(b,'b')];
+
+            if( a.find(one) == a.end() or a.find(two) == a.end() ){
+
+                hat.insert(b);
+            }
+
+        }
+
+        set<string> op = a;
+
+        for(auto el:hat){
+             op.erase(el);
+        }
+
+        tbd.insert(a);
+        tba.insert(op);
+        tba.insert(hat);
+               
+    }
+
+    prev = min;
+
+
+    for(auto f: tbd){
+
+        min.erase(f);
+
+    }
+
+    for(auto f:tba){
+
+        min.insert(f);
+
+    }
+
+}
+
+
+cout<<endl<<"States after Minimizing : ";
+for(auto a:min){
+    if(a.empty() == true){
+        continue;
+    }
+
+    for(auto b:a){
+
+        cout<<b;
+
+    }
+
+    cout<<" , ";
+
+}
+
+cout<<endl;
+
+
+for(auto a: min){
+
+    if( a.size()>1 ){
+        bool flag = 0;
+
+        string t1 ;
+        string t2 ;
+
+        string new_name = "s_";
+
+        for(auto b:a){
+
+            if(b == start_state){
+                flag = 1;
+
+            }
+
+            new_name+=b[2];
+
+            t1 = dfa[make_pair(b,'a')];
+            t2 = dfa[make_pair(b,'b')];
+
+            dfa.erase(make_pair(b,'a'));
+            dfa.erase(make_pair(b,'b'));
+        }
+
+
+        dfa[make_pair(new_name,'a')] = t1;
+        dfa[make_pair(new_name,'b')] = t2;
+        if(flag == 1){
+             start_state = new_name;
+        }
+       
+    }
+
+}
+
+
+    
+}
+
+
 
 
 void create_graph(string input){
@@ -188,10 +393,13 @@ void create_graph(string input){
 
     map<set<int> , string> nodes;
 
+    std::vector<string> names;
+
     int i=0;
     for(auto a:states){
 
         string name = "s_"+to_string(i);
+        names.push_back(name);
         nodes[ a ] = name;
         i++;
 
@@ -247,24 +455,16 @@ void create_graph(string input){
 
     cout<<"The edges of DFA formed :";
     cout<<endl<<endl;
-    for(auto key:dfa){ 
 
-        cout<<key.first.first<<" on "<<key.first.second<<" ----------> "<<key.second<<endl;
-      
-    }
+    printdfa(dfa,start_state,final_states);
 
-    cout<<"start_state: ";
+    minimize(dfa,start_state,final_states,names);
 
-    
-     cout<<start_state<<endl;
-
-    cout<<"final_states: ";
-
-    for(auto a:final_states){
-        cout<<a<<" ";
-
-    }
+    cout<<endl;
+    cout<<"Minimized DFA :";
     cout<<endl<<endl;
+    printdfa(dfa,start_state,final_states);
+
 
     verify(input,dfa,start_state,final_states);
 
@@ -273,17 +473,16 @@ void create_graph(string input){
 
 
 
-
-
 int main() {
-    #ifndef ONLINE_JUDGE
-      freopen("input.txt","r",stdin);
-      freopen("out.txt","w",stdout);  
-    #endif
+    // #ifndef ONLINE_JUDGE
+    //   freopen("input.txt","r",stdin);
+    //   freopen("out.txt","w",stdout);  
+    // #endif
 
     cout<<"Please input a string which you want to verify from the given grammar :";
     string input;
     cin>>input;
+    cout<<" "<<input<<endl;
 
 
     create_graph(input);
