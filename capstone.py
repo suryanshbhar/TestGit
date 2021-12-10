@@ -28,18 +28,28 @@ ban = AnalogIn(ads,ADS.P2)
 
 while True:
     time.sleep(5)
-    
-    temperature = sensor.get_temperature()
+    try:
+        temperature = sensor.get_temperature()
+    except:
+        temperature="error"
     print("The temperature is %s celsius" % temperature)
-    
-    ph = 3.28*chan.voltage+1.28
+    try:
+        ph = 3.28*chan.voltage+1.28
+    except:
+        ph="error"
     print("The pH is %s" % ph)
     
-    ntu = (-118.4*man.voltage) + 461.15
+    try:
+        ntu = (-118.4*man.voltage) + 461.15
+    except:
+        ntu="error"
     print("The ntu units are %s" % ntu)
     
-    v = ban.voltage
-    tds=(133.42*v*v*v -255.86*v*v+857.39*v)*0.5
+    try:
+        v = ban.voltage
+        tds=(133.42*v*v*v -255.86*v*v+857.39*v)*0.5
+    except:
+        tds="error"
     print("The ntu units are %s" % tds)
     
     #data transmission
@@ -49,8 +59,7 @@ while True:
         'sensor1': temperature,
         'sensor2': ph,
         'sensor3': ntu,
-        'sensor4': temperature,
-        'time': tds,
+        'sensor4': tds,
+        'time': ctime,
     }
     result = firebase.post(f'/{username}/',data)
-    
